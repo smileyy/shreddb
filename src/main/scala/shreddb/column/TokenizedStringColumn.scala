@@ -7,7 +7,7 @@ import shreddb.token.{TokenLookupTable, TokenLookupTableBuilder}
 import java.io.{DataInputStream, DataOutputStream}
 import java.nio.charset.Charset
 
-class TokenizedEnumeratedColumn(val name: String, numRows: Long, storage: Storage, resource: ResourceDescriptor, charset: Charset) extends GroupByColumn {
+class TokenizedStringColumn(val name: String, numRows: Long, storage: Storage, resource: ResourceDescriptor, charset: Charset) extends GroupByColumn {
   private val resourceSource = storage.newResourceSource(resource)
 
   private val lookupTable: TokenLookupTable = {
@@ -29,12 +29,12 @@ class TokenizedEnumeratedColumn(val name: String, numRows: Long, storage: Storag
     builder.build()
   }
 
-  override def newReader(): ColumnReader = new TokenizedEnumeratedColumnReader(numRows, lookupTable, resourceSource)
+  override def newReader(): ColumnReader = new TokenizedStringColumnReader(numRows, lookupTable, resourceSource)
 
   override def valueAccessor: GroupByValueAccessor = new TokenizedGroupByValueAccessor(lookupTable)
 }
 
-class TokenizedEnumeratedColumnWriter(val resource: ResourceSink, val name: String, charset: Charset) extends ColumnWriter {
+class TokenizedStringColumnWriter(val resource: ResourceSink, val name: String, charset: Charset) extends ColumnWriter {
   private val valueOutput = new DataOutputStream(resource.newOutputStream(".values"))
   private val tableOutput = new DataOutputStream(resource.newOutputStream(".lookup"))
 
@@ -60,10 +60,10 @@ class TokenizedEnumeratedColumnWriter(val resource: ResourceSink, val name: Stri
     valueOutput.close()
   }
 
-  override def format: ColumnFormat = EnumeratedColumnFormat(TokenizedEnumeration, charset)
+  override def format: ColumnFormat = TokenizedStringColumnFormat(charset)
 }
 
-class TokenizedEnumeratedColumnReader(numRows: Long, val lookupTable: TokenLookupTable, source: ResourceSource) extends ColumnReader {
+class TokenizedStringColumnReader(numRows: Long, val lookupTable: TokenLookupTable, source: ResourceSource) extends ColumnReader {
   val input = new DataInputStream(source.newInputStream(".values"))
 
   var currentIndex: Long = -1
@@ -97,12 +97,12 @@ class TokenizedEnumeratedColumnReader(numRows: Long, val lookupTable: TokenLooku
     currentIndex < numRows
   }
 
-  override def filteredBy(criteria: Criteria): FilteredColumnReader = FilteredTokenizedEnumeratedColumnReader(this, criteria)
+  override def filteredBy(criteria: Criteria): FilteredColumnReader = FilteredTokenizedStringColumnReader(this, criteria)
 
   override def close(): Unit = input.close()
 }
 
-class FilteredTokenizedEnumeratedColumnReader(reader: TokenizedEnumeratedColumnReader, criteria: TokenizedCriteria) extends FilteredColumnReader {
+class FilteredTokenizedStringColumnReader(reader: TokenizedStringColumnReader, criteria: TokenizedCriteria) extends FilteredColumnReader {
   override def nextMatchingIndexAtOrAfter(idx: Long): Option[Long] = {
     reader.valueAt(idx) match {
       case Some(_) =>
@@ -133,8 +133,8 @@ class FilteredTokenizedEnumeratedColumnReader(reader: TokenizedEnumeratedColumnR
     }
   }
 }
-object FilteredTokenizedEnumeratedColumnReader {
-  def apply(reader: TokenizedEnumeratedColumnReader, criteria: Criteria): FilteredTokenizedEnumeratedColumnReader = {
+object FilteredTokenizedStringColumnReader {
+  def apply(reader: TokenizedStringColumnReader, criteria: Criteria): FilteredTokenizedStringColumnReader = {
     val lookupTable = reader.lookupTable
     val tokenizedCriteria: TokenizedCriteria = criteria match {
       case Is(_, value) => lookupTable.getToken(value) match {
@@ -145,7 +145,7 @@ object FilteredTokenizedEnumeratedColumnReader {
         TokenizedIn(values.flatMap { value => lookupTable.getToken(value) })
     }
 
-    new FilteredTokenizedEnumeratedColumnReader(reader, tokenizedCriteria)
+    new FilteredTokenizedStringColumnReader(reader, tokenizedCriteria)
   }
 }
 

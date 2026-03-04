@@ -3,7 +3,6 @@ package shreddb.storage
 import shreddb.{ResourceDescriptor, StorageDescriptor}
 
 import java.io.{InputStream, OutputStream}
-import java.nio.charset.Charset
 
 trait Storage {
   /**

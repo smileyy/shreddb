@@ -1,9 +1,8 @@
 package shreddb.column
 
 import shreddb.input.Input
-import shreddb.storage.{ResourceSink, Storage}
+import shreddb.storage.Storage
 import shreddb.{
-  ColumnDescriptor,
   ColumnsFormat,
   ShredManifest,
   Shredder,

@@ -6,13 +6,13 @@ import shreddb.storage.{ResourceSink, ResourceSource, Storage}
 import java.io.{DataInputStream, DataOutputStream}
 import java.nio.charset.Charset
 
-class RawEnumeratedColumn(val name: String, numRows: Long, storage: Storage, resource: ResourceDescriptor, charset: Charset) extends GroupByColumn {
+class RawStringColumn(val name: String, numRows: Long, storage: Storage, resource: ResourceDescriptor, charset: Charset) extends GroupByColumn {
   override def valueAccessor: GroupByValueAccessor = RawEnumeratedGroupByValueAccessor
 
-  override def newReader(): ColumnReader = new RawEnumeratedColumnReader(numRows, storage.newResourceSource(resource), charset)
+  override def newReader(): ColumnReader = new RawStringColumnReader(numRows, storage.newResourceSource(resource), charset)
 }
 
-class RawEnumeratedColumnWriter(val resource: ResourceSink, val name: String, charset: Charset) extends ColumnWriter {
+class RawStringColumnWriter(val resource: ResourceSink, val name: String, charset: Charset) extends ColumnWriter {
   private val output = new DataOutputStream(resource.newOutputStream(".values"))
 
   override def addValue(value: String): Unit = {
@@ -27,10 +27,10 @@ class RawEnumeratedColumnWriter(val resource: ResourceSink, val name: String, ch
     output.close()
   }
 
-  override def format: ColumnFormat = EnumeratedColumnFormat(RawEnumeration, charset)
+  override def format: ColumnFormat = RawStringColumnFormat(charset)
 }
 
-class RawEnumeratedColumnReader(val numRows: Long, resource: ResourceSource, charset: Charset) extends ColumnReader {
+class RawStringColumnReader(val numRows: Long, resource: ResourceSource, charset: Charset) extends ColumnReader {
   private val input = new DataInputStream(resource.newInputStream(".values"))
 
   var currentIndex = -1
@@ -67,12 +67,12 @@ class RawEnumeratedColumnReader(val numRows: Long, resource: ResourceSource, cha
     currentIndex < numRows
   }
 
-  override def filteredBy(criteria: Criteria): FilteredColumnReader = new FilteredRawEnumeratedColumnReader(this, criteria)
+  override def filteredBy(criteria: Criteria): FilteredColumnReader = new FilteredRawStringColumnReader(this, criteria)
 
   override def close(): Unit = input.close()
 }
 
-class FilteredRawEnumeratedColumnReader(reader: RawEnumeratedColumnReader, criteria: Criteria) extends FilteredColumnReader {
+class FilteredRawStringColumnReader(reader: RawStringColumnReader, criteria: Criteria) extends FilteredColumnReader {
   override def nextMatchingIndexAtOrAfter(idx: Long): Option[Long] = {
     reader.valueAt(idx) match {
       case Some(_) =>
