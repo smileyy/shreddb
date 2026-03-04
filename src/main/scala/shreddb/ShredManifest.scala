@@ -3,8 +3,6 @@ package shreddb
 import shreddb.column.ColumnFormat
 import shreddb.storage.{Compression, StorageSystem}
 
-import java.nio.charset.{Charset, StandardCharsets}
-
 case class ShredManifest(table: TableDescriptor, metadata: Map[String, String] = Map.empty) {
   def withMetadata(metadata: Map[String, String]): ShredManifest = {
     ShredManifest(table, metadata)
@@ -20,7 +18,7 @@ case class TableDescriptor(
     resource: Seq[ResourceDescriptor] = Seq.empty
 ) {
   lazy val columnsByName: Map[String, ColumnDescriptor] = {
-    columns.map(c => (c.name -> c)).toMap
+    columns.map { c => c.name -> c }.toMap
   }
 }
 

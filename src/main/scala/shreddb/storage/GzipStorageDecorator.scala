@@ -3,7 +3,6 @@ package shreddb.storage
 import shreddb.ResourceDescriptor
 
 import java.io.{InputStream, OutputStream}
-import java.nio.charset.Charset
 import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 
 class GzipStorageDecorator(delegate: Storage) extends Storage {
