@@ -41,6 +41,8 @@ class ColumnTable(storage: Storage, val name: String, columns: Seq[Column]) exte
       }
     }
 
+    columnReadersByName.values.foreach { reader => reader.close() }
+
     builder.build()
   }
 

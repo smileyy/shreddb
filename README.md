@@ -54,7 +54,7 @@ If you're feeling spicy, open an issue yourself; I'll triage it (IOW, let you kn
 #### Prefer explicit braced functional parameters
 Like this:
 ```scala
-foo.bar(a { b -> f(b) })
+foo.bar(a) { b => f(b) }
 ```
 
 Yes, it's verbose. It reads easier to me than just parens or the use of `_`s
@@ -62,6 +62,9 @@ Yes, it's verbose. It reads easier to me than just parens or the use of `_`s
 #### No wildcard imports
 Yeah, no, I like to see what exactly is being imported. I make an exception for the import of implicits (which should 
 be used sparingly anyway).
+
+#### Optimize imports on changed classes
+Nobody likes unused imports.
 
 ### scalafmt
 There's a `.scalafmt` file that I don't strictly pay attention to / format with. So there's some run-on lines. Sorry!
