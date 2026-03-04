@@ -3,7 +3,6 @@ package shreddb.storage
 import shreddb.ResourceDescriptor
 
 import java.io.{InputStream, OutputStream}
-import java.nio.charset.Charset
 import java.nio.file.{Files, OpenOption, Path, StandardOpenOption}
 
 class FilesystemStorage(val directory: Path) extends Storage {

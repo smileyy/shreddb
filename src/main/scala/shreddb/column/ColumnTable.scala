@@ -4,9 +4,6 @@ import shreddb.aggregate.{Aggregator, AggregatorFactory, SumAggregatorFactory}
 import shreddb.storage.Storage
 import shreddb.{Aggregation, ShredQuery, ShredQueryException, ShredResultSet, ShredResultSetRow, ShredTable, Sum, TableDescriptor}
 
-import java.util
-import scala.:+
-import scala.jdk.CollectionConverters.*
 import scala.collection.mutable
 
 class ColumnTable(storage: Storage, val name: String, columns: Seq[Column]) extends ShredTable {
@@ -114,8 +111,8 @@ object ColumnTable {
     val columns: Seq[Column] = tableDescriptor.columns.map{ c =>
       c.format match {
         case DecimalColumnFormat => new DecimalColumn(c.name, tableDescriptor.numRows, storage, c.resource.get)
-        case EnumeratedColumnFormat(RawEnumeration, charset) => new RawEnumeratedColumn(c.name, tableDescriptor.numRows, storage, c.resource.get, charset)
-        case EnumeratedColumnFormat(TokenizedEnumeration, charset) => new TokenizedEnumeratedColumn(c.name, tableDescriptor.numRows, storage, c.resource.get, charset)
+        case RawStringColumnFormat(charset) => new RawStringColumn(c.name, tableDescriptor.numRows, storage, c.resource.get, charset)
+        case TokenizedStringColumnFormat(charset) => new TokenizedStringColumn(c.name, tableDescriptor.numRows, storage, c.resource.get, charset)
       }
     }
     new ColumnTable(storage, tableDescriptor.name, columns)
@@ -126,11 +123,10 @@ class ColumnTableResultSetBuilder(rows: mutable.Map[Seq[Object], Seq[Aggregator]
   def add(group: Seq[Object], values: Seq[BigDecimal]): Unit = {
     val aggregators = rows.get(group) match {
       case Some(aggregators) => aggregators
-      case None => {
+      case None =>
         val aggregators = aggregatorFactories.map(f => f.newAggregator())
         rows.put(group, aggregators)
         aggregators
-      }
     }
 
     aggregators.zip(values).foreach { (aggregator, value) =>
