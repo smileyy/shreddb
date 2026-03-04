@@ -7,17 +7,12 @@ import shreddb.storage.{Compression, GzipCompression, GzipStorageDecorator, NoCo
 class ShredDb(config: ShredConfiguration) {
   def shred(
     name: String,
-    input: Input,
-    storageSystem: StorageSystem,
-    columns: Seq[ColumnDefinition],
-    defaultColumnFormat: Option[ColumnFormat] = None,
-    compression: Compression = NoCompression,
-    format: TableFormat = ColumnsFormat,
+    request: ShredRequest,
     metadata: Map[String, String] = Map.empty
   ): ShredManifest = {
-    val storage = config.getStorageSystem(storageSystem, metadata)
-    val shredder = getShredder(name, format)
-    val mf = shredder.shred(name, storage, input, columns, defaultColumnFormat)
+    val storage = config.getStorageSystem(request.storageSystem, metadata)
+    val shredder = getShredder(name, request.format)
+    val mf = shredder.shred(name, storage, request.input, request.columns, request.defaultColumnFormat)
     mf.withMetadata(metadata)
   }
 
@@ -26,7 +21,7 @@ class ShredDb(config: ShredConfiguration) {
       case ColumnsFormat => new ColumnShredder()
     }
   }
-
+  
   def getTable(mf: ShredManifest): ShredTable = {
     val tableDescriptor: TableDescriptor = mf.table
 
@@ -46,3 +41,10 @@ class ShredDb(config: ShredConfiguration) {
     storage
   }
 }
+
+case class ShredRequest(input: Input,
+                        storageSystem: StorageSystem,
+                        columns: Seq[ColumnDefinition],
+                        defaultColumnFormat: Option[ColumnFormat] = None,
+                        compression: Compression = NoCompression,
+                        format: TableFormat = ColumnsFormat)
