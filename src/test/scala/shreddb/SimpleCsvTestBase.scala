@@ -28,7 +28,7 @@ trait SimpleCsvTestBase {
 
     // Ungrouped query with sum aggregation
     testQuery(table, ShredQuery(
-        select = Seq(Sum("qty")),
+        select = Seq(Sum.of("qty")),
         where = Seq(
           In("a", Set("A", "C")),
           Is("c", "SQS")
@@ -42,7 +42,7 @@ trait SimpleCsvTestBase {
 
     // Grouped query with sum aggregation
     testQuery(table, ShredQuery(
-        select = Seq(Sum("qty")),
+        select = Seq(Sum.of("qty")),
         where = Seq(
           In("a", Set("A", "C")),
           Is("c", "SQS")
@@ -63,7 +63,7 @@ trait SimpleCsvTestBase {
     
     // Grouped query with average aggregation
     testQuery(table, ShredQuery(
-        select = Seq(Average("qty")),
+        select = Seq(Average.of("qty")),
         where = Seq(
           In("a", Set("A", "C")),
           Is("c", "SQS")
@@ -83,7 +83,7 @@ trait SimpleCsvTestBase {
 
     // Multiple aggregations of the same column
     testQuery(table, ShredQuery(
-      select = Seq(Sum("qty"), Average("qty")),
+      select = Seq(Sum.of("qty"), Average.of("qty")),
       where = Seq(
         In("a", Set("A", "C")),
         Is("c", "SQS")
