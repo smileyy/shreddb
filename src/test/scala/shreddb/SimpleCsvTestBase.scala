@@ -4,6 +4,7 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.is
 import org.junit.jupiter.api.Test
 import shreddb.ShredQuery.select
+import shreddb.ShredQueryCriteriaImplicits.*
 import shreddb.input.Input
 import shreddb.input.csv.CsvInput
 
@@ -28,14 +29,14 @@ trait SimpleCsvTestBase {
     assertThat(table.columnNames, is(Seq("a", "b", "c", "tag:user", "qty")))
 
     // Ungrouped query with sum aggregation
-    testQuery(table, select(Sum.of("qty")).where(In("a", Set("A", "C")), Is("c", "SQS"))) { rs =>
+    testQuery(table, select(Sum.of("qty")).where("a".in(Set("A", "C")), "c".is("SQS"))) { rs =>
       assertThat(rs.size, is(1))
       assertThat(rs.rows.head.group, is(Seq.empty))
       assertThat(rs.rows.head.values, is(Seq(BigDecimal(16))))
     }
 
     // Grouped query with sum aggregation
-    testQuery(table, select(Sum.of("qty")).where(In("a", Set("A", "C")), Is("c", "SQS")).groupBy("a")) { rs =>
+    testQuery(table, select(Sum.of("qty")).where("a".in(Set("A", "C")), "c".is("SQS")).groupBy("a")) { rs =>
 
       assertThat(rs.size, is(2))
       val it = rs.iterator
@@ -48,7 +49,7 @@ trait SimpleCsvTestBase {
     }
 
     // Grouped query with average aggregation
-    testQuery(table, select(Average.of("qty")).where(In("a", Set("A", "C")), Is("c", "SQS")).groupBy("a")) { rs =>
+    testQuery(table, select(Average.of("qty")).where("a".in(Set("A", "C")), "c".is("SQS")).groupBy("a")) { rs =>
       assertThat(rs.size, is(2))
       val averagedResultSetIterator = rs.iterator
       val row1 = averagedResultSetIterator.next()
@@ -61,7 +62,7 @@ trait SimpleCsvTestBase {
 
     // Multiple aggregations of the same column
     testQuery(table, select(Sum.of("qty"), Average.of("qty"))
-      .where(In("a", Set("A", "C")), Is("c", "SQS"))
+      .where("a".in(Set("A", "C")), "c".is("SQS"))
       .groupBy("a")) { rs =>
 
       assertThat(rs.size, is(2))

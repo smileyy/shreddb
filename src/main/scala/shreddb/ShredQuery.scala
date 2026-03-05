@@ -8,11 +8,11 @@ case class ShredQuery(
   def where(criteria: Criteria*): ShredQuery = {
     copy(whereClause = criteria)
   }
-  
+
   def groupBy(fields: String*): ShredQuery = {
     copy(groupByFields = fields)
   }
-  
+
   def whereFields: Seq[String] = whereClause.map(criteria => criteria.field)
   def selectFields: Seq[String] = select.map(aggregation => aggregation.field)
 }
@@ -27,6 +27,11 @@ sealed trait Criteria {
 }
 case class Is(field: String, value: String) extends Criteria
 case class In(field: String, values: Set[String]) extends Criteria
+
+object ShredQueryCriteriaImplicits {
+  extension(field: String) def is(value: String) = Is(field, value)
+  extension(field: String) def in(values: Set[String]) = In(field, values)
+}
 
 sealed trait Aggregation {
   def field: String
