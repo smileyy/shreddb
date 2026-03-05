@@ -2,11 +2,24 @@ package shreddb
 
 case class ShredQuery(
     select: Seq[Aggregation],
-    where: Seq[Criteria],
-    groupBy: Seq[String]
+    whereClause: Seq[Criteria] = Seq.empty,
+    groupByFields: Seq[String] = Seq.empty
 ) {
-  def whereFields: Seq[String] = where.map(criteria => criteria.field)
+  def where(criteria: Criteria*): ShredQuery = {
+    copy(whereClause = criteria)
+  }
+  
+  def groupBy(fields: String*): ShredQuery = {
+    copy(groupByFields = fields)
+  }
+  
+  def whereFields: Seq[String] = whereClause.map(criteria => criteria.field)
   def selectFields: Seq[String] = select.map(aggregation => aggregation.field)
+}
+object ShredQuery {
+  def select(aggregations: Aggregation*): ShredQuery = {
+    new ShredQuery(aggregations)
+  }
 }
 
 sealed trait Criteria {
