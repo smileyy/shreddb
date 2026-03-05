@@ -19,4 +19,11 @@ sealed trait Aggregation {
   def field: String
 }
 case class Sum(field: String) extends Aggregation
+object Sum {
+  def of(field: String): Sum = new Sum(field)
+}
+
 case class Average(field: String) extends Aggregation
+object Average {
+  def of(field: String): Average = new Average(field)
+}
