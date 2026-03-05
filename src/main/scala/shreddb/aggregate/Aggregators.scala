@@ -31,10 +31,10 @@ object AverageAggregatorFactory extends AggregatorFactory {
   override def newAggregator(): Aggregator = new AverageAggregator(0, 0)
 }
 
-class TransformingAggregator(delegate: Aggregator, before: BigDecimal => BigDecimal) extends Aggregator {
+class TransformingAggregator(delegate: Aggregator, before: BigDecimal => BigDecimal, after: BigDecimal => BigDecimal) extends Aggregator {
   override def add(newValue: BigDecimal): Unit = delegate.add(before(newValue))
-  override def value: BigDecimal = delegate.value
+  override def value: BigDecimal = after(delegate.value)
 }
-class TransformingAggregatorFactory(delegate: AggregatorFactory, before: BigDecimal => BigDecimal) extends AggregatorFactory {
-  override def newAggregator(): Aggregator = new TransformingAggregator(delegate.newAggregator(), before)
+class TransformingAggregatorFactory(delegate: AggregatorFactory, before: BigDecimal => BigDecimal, after: BigDecimal => BigDecimal) extends AggregatorFactory {
+  override def newAggregator(): Aggregator = new TransformingAggregator(delegate.newAggregator(), before, after)
 }

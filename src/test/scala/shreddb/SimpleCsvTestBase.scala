@@ -81,13 +81,20 @@ trait SimpleCsvTestBase {
     }
 
     // Pre-aggregation transformation
-    testQuery(table, select(Sum.of("qty").preApply({ d => -d})).where("c".is("SQS"))) { rs =>
+    testQuery(table, select(Sum.of("qty").preApply({ d => -d}))) { rs =>
       assertThat(rs.size, is(1))
-      assertThat(rs.rows.head.values, is(Seq(BigDecimal(-16))))
+      assertThat(rs.rows.head.values, is(Seq(BigDecimal(-36))))
     }
-  }
 
-  private def testQuery(table: ShredTable, query: ShredQuery)(verify: ShredResultSet => Unit): Unit = {
+    // Post-aggregation transformation
+    testQuery(table, select(Sum.of("qty").postApply({ d => d + 1 }))) { rs =>
+      assertThat(rs.size, is(1))
+      assertThat(rs.rows.head.values, is(Seq(BigDecimal(37))))
+    }
+}
+
+
+private def testQuery(table: ShredTable, query: ShredQuery)(verify: ShredResultSet => Unit): Unit = {
     verify(table.query(query))
   }
 }
