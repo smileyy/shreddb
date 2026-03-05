@@ -74,6 +74,12 @@ trait SimpleCsvTestBase {
       assertThat(row2.group, is(Seq("C")))
       assertThat(row2.values, is(Seq(BigDecimal(15), BigDecimal("7.5"))))
     }
+
+    // Multiple aggregations of the same column
+    testQuery(table, select(Sum.of("qty").preApply({ d => -d})).where("c".is("SQS"))) { rs =>
+      assertThat(rs.size, is(1))
+      assertThat(rs.rows.head.values, is(Seq(BigDecimal(-16))))
+    }
   }
 
   private def testQuery(table: ShredTable, query: ShredQuery)(verify: ShredResultSet => Unit): Unit = {

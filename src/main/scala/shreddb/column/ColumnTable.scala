@@ -1,8 +1,8 @@
 package shreddb.column
 
-import shreddb.aggregate.{Aggregator, AggregatorFactory, AverageAggregatorFactory, SumAggregatorFactory}
+import shreddb.aggregate.{Aggregator, AggregatorFactory, AverageAggregatorFactory, SumAggregatorFactory, TransformingAggregatorFactory}
 import shreddb.storage.Storage
-import shreddb.{Aggregation, Average, ShredQuery, ShredQueryException, ShredResultSet, ShredResultSetRow, ShredTable, Sum, TableDescriptor}
+import shreddb.{Aggregation, Average, ShredQuery, ShredQueryException, ShredResultSet, ShredResultSetRow, ShredTable, Sum, TableDescriptor, TransformedAggregation}
 
 import scala.collection.mutable
 
@@ -155,10 +155,18 @@ object ColumnTableResultSetBuilder {
     }
 
     val aggregatorFactories = aggregations.map {
-      case Sum(_) => SumAggregatorFactory
-      case Average(_) => AverageAggregatorFactory
+      case t: TransformedAggregation => 
+        new TransformingAggregatorFactory(mapRawAggregatorToFactory(t.delegate), t.before)
+      case a: Aggregation => mapRawAggregatorToFactory(a)  
     }
 
     new ColumnTableResultSetBuilder(mutable.LinkedHashMap.empty, groupByAccessors, aggregatorFactories)
+  }
+  
+  private def mapRawAggregatorToFactory(aggregation: Aggregation): AggregatorFactory = aggregation match {
+    case Sum(_) => SumAggregatorFactory
+    case Average(_) => AverageAggregatorFactory
+    case t: TransformedAggregation => 
+      throw new ShredQueryException("Cannot nest transformations (this shouldn't be possible")
   }
 }
