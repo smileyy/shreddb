@@ -2,14 +2,14 @@
 
 ## What is it?
 
-Shreddb is a stateless (primarily*) column-oriented tool for indexing and querying tabular data. It's stateless in the
-sense that it has no "working memory". That is, there is no concept of a table being kept in memory to run queries 
-against. It is designed to (efficiently) load from a file store (like S3, but you can use a filesystem for local 
-testing). It's called "shred" because it shreds the data into individual files for each column and only accesses the
-columns necessary to execute the query, kinda like a paper shredder shreds paper into strips.
+Shreddb is a stateless (primarily*) column-oriented tool for indexing and querying tabular data. I consider it stateless 
+because it has no "working memory". That is, there is no concept of a table being kept in memory to run queries 
+against. It is designed to (efficiently) load from a file store (like S3 or some other cloud blob store, and also you 
+can use a filesystem for local testing). It's called "shred" because it shreds the data into individual files for each 
+column and only accesses the columns necessary to execute the query, kinda like a paper shredder shreds paper into strips.
 
-(*) It doesn't have to be column oriented. Someday I intend to write a row-based implementation to demonstrate how much
-better the columnar format is for queries.
+(*) It doesn't _have_ to be column oriented. Someday I intend to write a row-based implementation to demonstrate how 
+much better the columnar format is for queries.
 
 ### Why should I use it?
 You shouldn't. This is a fun exercise in writing things from first principles. Go use Spark or something.
