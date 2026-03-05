@@ -14,7 +14,19 @@ class SumAggregator(var value: BigDecimal) extends Aggregator {
     value = newValue + value
   }
 }
-
 object SumAggregatorFactory extends AggregatorFactory {
   override def newAggregator(): Aggregator = new SumAggregator(0)
+}
+
+class AverageAggregator(var sum: BigDecimal, var count: Long) extends Aggregator {
+  override def add(newValue: BigDecimal): Unit = {
+    sum = sum + newValue
+    count = count + 1
+  }
+
+  override def value: BigDecimal = sum / count
+}
+
+object AverageAggregatorFactory extends AggregatorFactory {
+  override def newAggregator(): Aggregator = new AverageAggregator(0, 0)
 }

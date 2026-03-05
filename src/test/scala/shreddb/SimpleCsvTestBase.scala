@@ -60,5 +60,25 @@ trait SimpleCsvTestBase {
     val groupedRow2 = groupedResultSetIterator.next()
     assertThat(groupedRow2.group, is(Seq("C")))
     assertThat(groupedRow2.values, is (Seq(BigDecimal(15))))
+
+    val averagedResultSet = table.query(
+      ShredQuery(
+        select = Seq(Average("qty")),
+        where = Seq(
+          In("a", Set("A", "C")),
+          Is("c", "SQS")
+        ),
+        groupBy = Seq("a")
+      )
+    )
+
+    assertThat(averagedResultSet.size, is(2))
+    val averagedResultSetIterator = averagedResultSet.iterator
+    val averagedRow1 = averagedResultSetIterator.next()
+    assertThat(averagedRow1.group, is(Seq("A")))
+    assertThat(averagedRow1.values, is(Seq(BigDecimal(1))))
+    val averagedRow2 = averagedResultSetIterator.next()
+    assertThat(averagedRow2.group, is(Seq("C")))
+    assertThat(averagedRow2.values, is(Seq(BigDecimal("7.5"))))
   }
 }

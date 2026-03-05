@@ -1,8 +1,8 @@
 package shreddb.column
 
-import shreddb.aggregate.{Aggregator, AggregatorFactory, SumAggregatorFactory}
+import shreddb.aggregate.{Aggregator, AggregatorFactory, AverageAggregatorFactory, SumAggregatorFactory}
 import shreddb.storage.Storage
-import shreddb.{Aggregation, ShredQuery, ShredQueryException, ShredResultSet, ShredResultSetRow, ShredTable, Sum, TableDescriptor}
+import shreddb.{Aggregation, Average, ShredQuery, ShredQueryException, ShredResultSet, ShredResultSetRow, ShredTable, Sum, TableDescriptor}
 
 import scala.collection.mutable
 
@@ -155,7 +155,8 @@ object ColumnTableResultSetBuilder {
     }
 
     val aggregatorFactories = aggregations.map {
-      case s: Sum => SumAggregatorFactory
+      case Sum(_) => SumAggregatorFactory
+      case Average(_) => AverageAggregatorFactory
     }
 
     new ColumnTableResultSetBuilder(mutable.LinkedHashMap.empty, groupByAccessors, aggregatorFactories)
