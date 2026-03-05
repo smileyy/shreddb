@@ -6,7 +6,7 @@ import shreddb.{Aggregation, Average, ShredQuery, ShredQueryException, ShredResu
 
 import scala.collection.mutable
 
-class ColumnTable(storage: Storage, val name: String, columns: Seq[Column]) extends ShredTable {
+class ColumnTable(storage: Storage, val name: String, numRows: Long, columns: Seq[Column]) extends ShredTable {
   override val columnNames: Seq[String] = columns.map { c => c.name }
 
   private val columnsByName: Map[String, Column] = columns.map { c => (c.name, c)}.toMap
@@ -29,17 +29,26 @@ class ColumnTable(storage: Storage, val name: String, columns: Seq[Column]) exte
     val groupByColumnReaders: Seq[ColumnReader] = query.groupByFields.map { field => columnReadersByName(field) }
     val valueColumnReaders: Seq[ColumnReader] = query.select.map { agg => columnReadersByName(agg.field) }
 
-    var done = false
-    var tip: Long = 0
-    while (!done) {
-      findFirstMatchingIndex(whereColumnReaders, tip) match {
-        case Some(idx) =>
-          addValues(builder, idx, groupByColumnReaders, valueColumnReaders)
-          tip = idx + 1
-        case None =>
-          done = true
+    if (whereColumnReaders.isEmpty) {
+      var idx = 0
+      while (idx < numRows) {
+        addValues(builder, idx, groupByColumnReaders, valueColumnReaders)
+        idx = idx + 1
+      }
+    } else {
+      var done = false
+      var tip: Long = 0
+      while (!done) {
+        findFirstMatchingIndex(whereColumnReaders, tip) match {
+          case Some(idx) =>
+            addValues(builder, idx, groupByColumnReaders, valueColumnReaders)
+            tip = idx + 1
+          case None =>
+            done = true
+        }
       }
     }
+
 
     columnReadersByName.values.foreach { reader => reader.close() }
 
@@ -117,7 +126,7 @@ object ColumnTable {
         case TokenizedStringColumnFormat(charset) => new TokenizedStringColumn(c.name, tableDescriptor.numRows, storage, c.resource.get, charset)
       }
     }
-    new ColumnTable(storage, tableDescriptor.name, columns)
+    new ColumnTable(storage, tableDescriptor.name, tableDescriptor.numRows, columns)
   }
 }
 

@@ -28,14 +28,19 @@ trait SimpleCsvTestBase {
     assertThat(table.name, is("simple-csv-test"))
     assertThat(table.columnNames, is(Seq("a", "b", "c", "tag:user", "qty")))
 
-    // Ungrouped query with sum aggregation
+    // No where clause; believe it or not, this bug wasn't found for a while.
+    testQuery(table, select(Sum.of("qty"))) { rs =>
+      assertThat(rs.size, is(1))
+      assertThat(rs.rows.head.values, is(Seq(BigDecimal(36))))
+    }
+    // Filtered, ungrouped query with sum aggregation
     testQuery(table, select(Sum.of("qty")).where("a".in(Set("A", "C")), "c".is("SQS"))) { rs =>
       assertThat(rs.size, is(1))
       assertThat(rs.rows.head.group, is(Seq.empty))
       assertThat(rs.rows.head.values, is(Seq(BigDecimal(16))))
     }
 
-    // Grouped query with sum aggregation
+    // Filtered, grouped query with sum aggregation
     testQuery(table, select(Sum.of("qty")).where("a".in(Set("A", "C")), "c".is("SQS")).groupBy("a")) { rs =>
 
       assertThat(rs.size, is(2))
@@ -48,7 +53,7 @@ trait SimpleCsvTestBase {
       assertThat(row2.values, is(Seq(BigDecimal(15))))
     }
 
-    // Grouped query with average aggregation
+    // Filtered, grouped query with average aggregation
     testQuery(table, select(Average.of("qty")).where("a".in(Set("A", "C")), "c".is("SQS")).groupBy("a")) { rs =>
       assertThat(rs.size, is(2))
       val averagedResultSetIterator = rs.iterator
@@ -75,7 +80,7 @@ trait SimpleCsvTestBase {
       assertThat(row2.values, is(Seq(BigDecimal(15), BigDecimal("7.5"))))
     }
 
-    // Multiple aggregations of the same column
+    // Pre-aggregation transformation
     testQuery(table, select(Sum.of("qty").preApply({ d => -d})).where("c".is("SQS"))) { rs =>
       assertThat(rs.size, is(1))
       assertThat(rs.rows.head.values, is(Seq(BigDecimal(-16))))
