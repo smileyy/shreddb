@@ -36,10 +36,15 @@ object ShredQueryCriteriaImplicits {
 sealed trait Aggregation {
   def field: String
   def preApply(f: BigDecimal => BigDecimal): Aggregation = this match {
-    case t: TransformedAggregation => new TransformedAggregation(t.delegate, f)
+    case t: TransformedAggregation => new TransformedAggregation(t.delegate, before = f, after = t.after)
     case agg: Aggregation => new TransformedAggregation(agg, before = f)
   }
+  def postApply(f: BigDecimal => BigDecimal): Aggregation = this match {
+    case t: TransformedAggregation => new TransformedAggregation(t.delegate, before = t.before, after = f)
+    case agg: Aggregation => new TransformedAggregation(agg, after = f)
+  }
 }
+
 case class Sum(field: String) extends Aggregation
 object Sum {
   def of(field: String): Aggregation = new Sum(field)
@@ -50,6 +55,6 @@ object Average {
   def of(field: String): Aggregation = new Average(field)
 }
 
-class TransformedAggregation(val delegate: Aggregation, val before: BigDecimal => BigDecimal = { d => d }) extends Aggregation {
+class TransformedAggregation(val delegate: Aggregation, val before: BigDecimal => BigDecimal = { d => d }, val after: BigDecimal => BigDecimal = { d => d }) extends Aggregation {
   override def field: String = delegate.field
 }

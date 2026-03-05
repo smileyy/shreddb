@@ -165,7 +165,7 @@ object ColumnTableResultSetBuilder {
 
     val aggregatorFactories = aggregations.map {
       case t: TransformedAggregation => 
-        new TransformingAggregatorFactory(mapRawAggregatorToFactory(t.delegate), t.before)
+        new TransformingAggregatorFactory(mapRawAggregatorToFactory(t.delegate), t.before, t.after)
       case a: Aggregation => mapRawAggregatorToFactory(a)  
     }
 
