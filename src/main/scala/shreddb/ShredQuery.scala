@@ -5,6 +5,9 @@ case class ShredQuery(
     whereClause: Seq[Criteria] = Seq.empty,
     groupByFields: Seq[String] = Seq.empty
 ) {
+  def whereFields: Seq[String] = whereClause.map(criteria => criteria.field)
+  def selectFields: Seq[String] = select.map(aggregation => aggregation.field)
+
   def where(criteria: Criteria*): ShredQuery = {
     copy(whereClause = criteria)
   }
@@ -12,9 +15,6 @@ case class ShredQuery(
   def groupBy(fields: String*): ShredQuery = {
     copy(groupByFields = fields)
   }
-
-  def whereFields: Seq[String] = whereClause.map(criteria => criteria.field)
-  def selectFields: Seq[String] = select.map(aggregation => aggregation.field)
 }
 object ShredQuery {
   def select(aggregations: Aggregation*): ShredQuery = {
@@ -35,13 +35,21 @@ object ShredQueryCriteriaImplicits {
 
 sealed trait Aggregation {
   def field: String
+  def preApply(f: BigDecimal => BigDecimal): Aggregation = this match {
+    case t: TransformedAggregation => new TransformedAggregation(t.delegate, f)
+    case agg: Aggregation => new TransformedAggregation(agg, before = f)
+  }
 }
 case class Sum(field: String) extends Aggregation
 object Sum {
-  def of(field: String): Sum = new Sum(field)
+  def of(field: String): Aggregation = new Sum(field)
 }
 
 case class Average(field: String) extends Aggregation
 object Average {
-  def of(field: String): Average = new Average(field)
+  def of(field: String): Aggregation = new Average(field)
+}
+
+class TransformedAggregation(val delegate: Aggregation, val before: BigDecimal => BigDecimal = { d => d }) extends Aggregation {
+  override def field: String = delegate.field
 }
