@@ -18,15 +18,15 @@ class ColumnTable(storage: Storage, val name: String, columns: Seq[Column]) exte
 
     val columnReadersByName: Map[String, ColumnReader] = {
       val names =
-        mutable.LinkedHashSet.empty[String].addAll(query.groupBy).addAll(query.whereFields).addAll(query.selectFields)
+        mutable.LinkedHashSet.empty[String].addAll(query.groupByFields).addAll(query.whereFields).addAll(query.selectFields)
       names.map { name => (name, columnsByName(name)) }.map { (name, column) => (name, column.newReader()) }.toMap
     }
 
-    val whereColumnReaders: Seq[FilteredColumnReader] = query.where.map { criteria =>
+    val whereColumnReaders: Seq[FilteredColumnReader] = query.whereClause.map { criteria =>
       columnReadersByName(criteria.field).filteredBy(criteria)
     }
 
-    val groupByColumnReaders: Seq[ColumnReader] = query.groupBy.map { field => columnReadersByName(field) }
+    val groupByColumnReaders: Seq[ColumnReader] = query.groupByFields.map { field => columnReadersByName(field) }
     val valueColumnReaders: Seq[ColumnReader] = query.select.map { agg => columnReadersByName(agg.field) }
 
     var done = false
@@ -82,7 +82,7 @@ class ColumnTable(storage: Storage, val name: String, columns: Seq[Column]) exte
   }
 
   private def newResultSetBuilder(query: ShredQuery): ColumnTableResultSetBuilder = {
-    val groupByColumns = query.groupBy.map { name => columnsByName(name) }
+    val groupByColumns = query.groupByFields.map { name => columnsByName(name) }
 
     ColumnTableResultSetBuilder.empty(groupByColumns, query.select)
   }
@@ -101,7 +101,7 @@ class ColumnTable(storage: Storage, val name: String, columns: Seq[Column]) exte
       }
     }
 
-    query.groupBy.foreach { field =>
+    query.groupByFields.foreach { field =>
       if (!columnNameSet.contains(field)) {
         throw new ShredQueryException(s"Group by field $field is not in $name: $columnNames")
       }
