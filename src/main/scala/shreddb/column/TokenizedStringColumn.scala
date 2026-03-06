@@ -1,6 +1,6 @@
 package shreddb.column
 
-import shreddb.{Criteria, In, Is, ResourceDescriptor}
+import shreddb.{Criteria, In, Is, ResourceDescriptor, ShredQueryException, SuchThat}
 import shreddb.storage.{ResourceSink, ResourceSource, Storage}
 import shreddb.token.{TokenLookupTable, TokenLookupTableBuilder}
 
@@ -75,6 +75,7 @@ class FilteredTokenizedStringColumnReader(reader: TokenizedStringColumnReader, c
     criteria match {
       case TokenizedIs(token) => token == value
       case TokenizedIn(tokens) => tokens.contains(value.asInstanceOf[Int])
+      case TokenizedSuchThat(lookupTable, f) => f(lookupTable.resolve(value.asInstanceOf[Int]))
       case TokenDoesNotExist => false
     }
   }
@@ -89,6 +90,8 @@ object FilteredTokenizedStringColumnReader {
       }
       case In(_, values) =>
         TokenizedIn(values.flatMap { value => lookupTable.getToken(value) })
+      case SuchThat(_, f) => TokenizedSuchThat(lookupTable, f)
+      case _ => throw new ShredQueryException("Unsupported criteria for Tokenized String column")
     }
 
     new FilteredTokenizedStringColumnReader(reader, tokenizedCriteria)
@@ -99,6 +102,7 @@ sealed trait TokenizedCriteria
 case class TokenizedIs(value: Int) extends TokenizedCriteria
 case class TokenizedIn(values: Set[Int]) extends TokenizedCriteria
 case object TokenDoesNotExist extends TokenizedCriteria
+case class TokenizedSuchThat(lookupTable: TokenLookupTable, f: String => Boolean) extends TokenizedCriteria
 
 class TokenizedGroupByValueAccessor(lookupTable: TokenLookupTable) extends GroupByValueAccessor {
   override def getValue(raw: Any): String = lookupTable.resolve(raw.asInstanceOf[Int])
