@@ -2,15 +2,15 @@ package shreddb
 
 import shreddb.column.{ColumnDefinition, ColumnFormat, ColumnShredder, ColumnTable}
 import shreddb.input.Input
-import shreddb.storage.{Compression, GzipCompression, GzipStorageDecorator, NoCompression, Storage}
+import shreddb.storage.{Compression, NoCompression}
 
 class ShredDb(config: ShredConfiguration) {
   def shred(
     input: Input,
     table: TableDefinition,
-    format: TableFormat,
     storage: String,
-    compression: Compression,
+    compression: Compression = NoCompression,
+    format: TableFormat = ColumnsFormat,
     metadata: Map[String, String] = Map.empty
   ): ShredManifest = {
     getShredder(format).shred(config, input, table, storage, compression, metadata)
