@@ -1,5 +1,5 @@
 package shreddb.column
 
 trait GroupByValueAccessor {
-  def getValue(raw: Object): String
+  def getValue(raw: Any): String
 }

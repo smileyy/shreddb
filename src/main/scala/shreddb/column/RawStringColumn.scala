@@ -3,7 +3,7 @@ package shreddb.column
 import shreddb.{Criteria, In, Is, ResourceDescriptor}
 import shreddb.storage.{ResourceSink, ResourceSource, Storage}
 
-import java.io.{DataInputStream, DataOutputStream}
+import java.io.{DataInputStream, DataOutputStream, InputStream}
 import java.nio.charset.Charset
 
 class RawStringColumn(val name: String, numRows: Long, storage: Storage, resource: ResourceDescriptor, charset: Charset) extends GroupByColumn {
@@ -30,46 +30,18 @@ class RawStringColumnWriter(val resource: ResourceSink, val name: String, charse
   override def format: ColumnFormat = RawStringColumnFormat(charset)
 }
 
-class RawStringColumnReader(val numRows: Long, resource: ResourceSource, charset: Charset) extends ColumnReader {
-  private val input = new DataInputStream(resource.newInputStream(".values"))
+class RawStringColumnReader(val numRows: Long, resource: ResourceSource, charset: Charset) extends AbstractColumnReader(numRows) {
+  override protected def newInputStream(): InputStream = resource.newInputStream(".values")
 
-  var currentIndex = -1
-  var currentValue: String = next()
+  override protected def readNext(input: DataInputStream): Any = {
+    val length = input.readInt()
+    val bytes: Array[Byte] = new Array(length)
+    input.read(bytes)
 
-  override def valueAt(idx: Long): Option[Object] = {
-    if (idx == currentIndex) {
-      Some(currentValue)
-    } else if (idx >= numRows) {
-      None
-    } else if (currentIndex < idx) {
-      while (currentIndex < idx) {
-        currentValue = next()
-      }
-      Some(currentValue)
-    } else {
-      throw new Exception(s"Cannot read backwards from current index $currentIndex to $idx")
-    }
-  }
-
-  def next(): String = {
-      val length = input.readInt()
-      val bytes: Array[Byte] = new Array(length)
-      input.read(bytes)
-      val result = new String(bytes, charset)
-
-      currentIndex = currentIndex + 1
-      currentValue = result
-
-      currentValue
-  }
-
-  def hasNext: Boolean = {
-    currentIndex < numRows
+    new String(bytes, charset)
   }
 
   override def filteredBy(criteria: Criteria): FilteredColumnReader = new FilteredRawStringColumnReader(this, criteria)
-
-  override def close(): Unit = input.close()
 }
 
 class FilteredRawStringColumnReader(reader: RawStringColumnReader, criteria: Criteria) extends FilteredColumnReader {
@@ -95,14 +67,14 @@ class FilteredRawStringColumnReader(reader: RawStringColumnReader, criteria: Cri
     result
   }
 
-  def accepts(value: String): Boolean = {
+  def accepts(value: Any): Boolean = {
     criteria match {
       case Is(_, v) => v == value
-      case In(_, vs) => vs.contains(value)
+      case In(_, vs) => vs.contains(value.asInstanceOf[String])
     }
   }
 }
 
 object RawEnumeratedGroupByValueAccessor extends GroupByValueAccessor {
-  override def getValue(raw: Object): String = raw.asInstanceOf[String]
+  override def getValue(raw: Any): String = raw.asInstanceOf[String]
 }

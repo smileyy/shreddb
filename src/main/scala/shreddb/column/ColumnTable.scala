@@ -85,7 +85,7 @@ class ColumnTable(storage: Storage, val name: String, numRows: Long, columns: Se
   }
 
   def addValues(builder: ColumnTableResultSetBuilder, idx: Long, groupByReaders: Seq[ColumnReader], valueReaders: Seq[ColumnReader]): Unit = {
-    val groupByValues: Seq[Object] = groupByReaders.map { reader => reader.valueAt(idx).get }
+    val groupByValues: Seq[Any] = groupByReaders.map { reader => reader.valueAt(idx).get }
     val values: Seq[BigDecimal] = valueReaders.map { reader => reader.valueAt(idx).get.asInstanceOf[BigDecimal] }
     builder.add(groupByValues, values)
   }
@@ -130,8 +130,8 @@ object ColumnTable {
   }
 }
 
-class ColumnTableResultSetBuilder(rows: mutable.Map[Seq[Object], Seq[Aggregator]], groupByAccessors: Seq[GroupByValueAccessor], aggregatorFactories: Seq[AggregatorFactory]) {
-  def add(group: Seq[Object], values: Seq[BigDecimal]): Unit = {
+class ColumnTableResultSetBuilder(rows: mutable.Map[Seq[Any], Seq[Aggregator]], groupByAccessors: Seq[GroupByValueAccessor], aggregatorFactories: Seq[AggregatorFactory]) {
+  def add(group: Seq[Any], values: Seq[BigDecimal]): Unit = {
     val aggregators = rows.get(group) match {
       case Some(aggregators) => aggregators
       case None =>

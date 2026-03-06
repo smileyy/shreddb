@@ -4,7 +4,7 @@ import shreddb.{Criteria, In, Is, ResourceDescriptor}
 import shreddb.storage.{ResourceSink, ResourceSource, Storage}
 import shreddb.token.{TokenLookupTable, TokenLookupTableBuilder}
 
-import java.io.{DataInputStream, DataOutputStream}
+import java.io.{DataInputStream, DataOutputStream, InputStream}
 import java.nio.charset.Charset
 
 class TokenizedStringColumn(val name: String, numRows: Long, storage: Storage, resource: ResourceDescriptor, charset: Charset) extends GroupByColumn {
@@ -63,43 +63,11 @@ class TokenizedStringColumnWriter(val resource: ResourceSink, val name: String, 
   override def format: ColumnFormat = TokenizedStringColumnFormat(charset)
 }
 
-class TokenizedStringColumnReader(numRows: Long, val lookupTable: TokenLookupTable, source: ResourceSource) extends ColumnReader {
-  val input = new DataInputStream(source.newInputStream(".values"))
-
-  var currentIndex: Long = -1
-  var currentValue: Int = next()
-
-  override def valueAt(idx: Long): Option[Object] = {
-    if (idx == currentIndex) {
-      Some(Int.box(currentValue))
-    } else if (idx >= numRows) {
-      None
-    } else if (currentIndex < idx) {
-      while (currentIndex < idx) {
-        currentValue = next()
-      }
-      Some(Int.box(currentValue))
-    } else {
-      throw new Exception(s"Cannot read backwards from current index $currentIndex to $idx")
-    }
-  }
-
-  def next(): Int = {
-    val result = input.readInt()
-
-    currentIndex  = currentIndex + 1
-    currentValue = result
-
-    currentValue
-  }
-
-  def hasNext: Boolean = {
-    currentIndex < numRows
-  }
+class TokenizedStringColumnReader(numRows: Long, val lookupTable: TokenLookupTable, source: ResourceSource) extends AbstractColumnReader(numRows) {
+  override protected def newInputStream(): InputStream = source.newInputStream(".values")
+  override protected def readNext(input: DataInputStream): Any = input.readInt()
 
   override def filteredBy(criteria: Criteria): FilteredColumnReader = FilteredTokenizedStringColumnReader(this, criteria)
-
-  override def close(): Unit = input.close()
 }
 
 class FilteredTokenizedStringColumnReader(reader: TokenizedStringColumnReader, criteria: TokenizedCriteria) extends FilteredColumnReader {
@@ -125,10 +93,10 @@ class FilteredTokenizedStringColumnReader(reader: TokenizedStringColumnReader, c
     result
   }
 
-  def accepts(value: Int): Boolean = {
+  def accepts(value: Any): Boolean = {
     criteria match {
       case TokenizedIs(token) => token == value
-      case TokenizedIn(tokens) => tokens.contains(value)
+      case TokenizedIn(tokens) => tokens.contains(value.asInstanceOf[Int])
       case TokenDoesNotExist => false
     }
   }
@@ -155,5 +123,5 @@ case class TokenizedIn(values: Set[Int]) extends TokenizedCriteria
 case object TokenDoesNotExist extends TokenizedCriteria
 
 class TokenizedGroupByValueAccessor(lookupTable: TokenLookupTable) extends GroupByValueAccessor {
-  override def getValue(raw: Object): String = lookupTable.resolve(raw.asInstanceOf[Int])
+  override def getValue(raw: Any): String = lookupTable.resolve(raw.asInstanceOf[Int])
 }

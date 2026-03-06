@@ -3,7 +3,7 @@ package shreddb.column
 import shreddb.{Criteria, ResourceDescriptor, ShredQueryException}
 import shreddb.storage.{ResourceSink, ResourceSource, Storage}
 
-import java.io.{DataInputStream, DataOutputStream}
+import java.io.{DataInputStream, DataOutputStream, InputStream}
 import java.math.BigInteger
 
 class DecimalColumn(val name: String, numRows: Long, storage: Storage, resource: ResourceDescriptor) extends Column {
@@ -32,48 +32,18 @@ class DecimalColumnWriter(val resource: ResourceSink, val name: String) extends 
   override def format: ColumnFormat = DecimalColumnFormat
 }
 
-class DecimalColumnReader(numRows: Long, resource: ResourceSource) extends ColumnReader {
-  private val input = new DataInputStream(resource.newInputStream(".values"))
+class DecimalColumnReader(numRows: Long, resource: ResourceSource) extends AbstractColumnReader(numRows) {
+  override def newInputStream(): InputStream = resource.newInputStream(".values")
 
-  var currentIndex: Long = -1
-  var currentValue: BigDecimal = next()
 
-  override def valueAt(idx: Long): Option[Object] = {
-    if (idx == currentIndex) {
-      Some(currentValue)
-    } else if (currentIndex < idx) {
-      while (currentIndex < idx) {
-        currentValue = next()
-      }
-      Some(currentValue)
-    } else if (idx >= numRows) {
-      None
-    } else {
-      throw new Exception(s"Cannot read backwards from current index $currentIndex to $idx")
-    }
-  }
-
-  def next(): BigDecimal = {
+  override protected def readNext(input: DataInputStream): Any = {
     val scale = input.readInt()
+
     val length = input.readInt()
     val bytes: Array[Byte] = new Array(length)
     input.read(bytes)
 
     val integer = new BigInteger(bytes)
-    val result = new java.math.BigDecimal(integer, scale)
-
-    currentIndex  = currentIndex + 1
-    
-    result
+    new BigDecimal(new java.math.BigDecimal(integer, scale))
   }
-
-  def hasNext: Boolean = {
-    currentIndex < numRows
-  }
-
-  override def filteredBy(criteria: Criteria): FilteredColumnReader = {
-    throw new ShredQueryException(s"Cannot filter a decimal column (yet!)")
-  }
-
-  override def close(): Unit = input.close()
 }
