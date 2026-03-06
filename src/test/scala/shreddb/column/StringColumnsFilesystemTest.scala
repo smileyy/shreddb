@@ -1,24 +1,19 @@
 package shreddb.column
 
-import shreddb.storage.{Filesystem, NoCompression}
-import shreddb.{ColumnsFormat, ShredRequest, SimpleCsvTestBase}
+import shreddb.storage.{Compression, NoCompression}
+import shreddb.{ColumnsFormat, SimpleCsvTestBase, TableDefinition, TableFormat}
 
 class StringColumnsFilesystemTest extends SimpleCsvTestBase {
-  override def request: ShredRequest = {
-    val columns = Seq(
+  override def format: TableFormat = ColumnsFormat
+  override def storage: String = "file"
+  override def compression: Compression = NoCompression
+
+  override def columns: Seq[ColumnDefinition] = Seq(
       ColumnDefinition("a", StringColumnFormat()),
       ColumnDefinition("b", StringColumnFormat()),
       ColumnDefinition("c", StringColumnFormat()),
       ColumnDefinition("qty", DecimalColumnFormat)
     )
-
-    ShredRequest(
-      input,
-      Filesystem,
-      columns,
-      Some(StringColumnFormat()),
-      NoCompression,
-      ColumnsFormat
-    )
-  }
+  
+  override def defaultColumnFormat: Option[ColumnFormat] = Some(StringColumnFormat())
 }

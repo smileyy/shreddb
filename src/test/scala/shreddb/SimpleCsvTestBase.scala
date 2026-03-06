@@ -5,26 +5,35 @@ import org.hamcrest.Matchers.is
 import org.junit.jupiter.api.Test
 import shreddb.ShredQuery.select
 import shreddb.ShredQueryCriteriaImplicits.*
+import shreddb.column.{ColumnDefinition, ColumnFormat}
 import shreddb.input.Input
 import shreddb.input.csv.CsvInput
+import shreddb.storage.Compression
 
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 
 trait SimpleCsvTestBase {
-  def request: ShredRequest
+  def format: TableFormat
+  def storage: String
+  def compression: Compression
 
+  def columns: Seq[ColumnDefinition]
+  def defaultColumnFormat: Option[ColumnFormat]
+  
   val input: Input = new CsvInput(
-    new InputStreamReader(classOf[SimpleCsvTestBase].getResourceAsStream("simple-test-data.csv"), StandardCharsets.UTF_8)
+    new InputStreamReader(
+      classOf[SimpleCsvTestBase].getResourceAsStream("simple-test-data.csv"), StandardCharsets.UTF_8)
   )
 
   @Test
   def test(): Unit = {
-    val shred = new ShredDb(TestConfiguration)
+    val shreddb = new ShredDb(TestConfiguration)
 
-    val mf = shred.shred("simple-csv-test", request)
+    val tableDefinition = TableDefinition("simple-csv-test", columns, defaultColumnFormat)
+    val mf = shreddb.shred(input, tableDefinition, format, storage, compression)
 
-    val table = shred.getTable(mf)
+    val table = shreddb.getTable(mf)
     assertThat(table.name, is("simple-csv-test"))
     assertThat(table.columnNames, is(Seq("a", "b", "c", "tag:user", "qty")))
 
@@ -33,6 +42,7 @@ trait SimpleCsvTestBase {
       assertThat(rs.size, is(1))
       assertThat(rs.rows.head.values, is(Seq(BigDecimal(36))))
     }
+    
     // Filtered, ungrouped query with sum aggregation
     testQuery(table, select(Sum.of("qty")).where("a".in(Set("A", "C")), "c".is("SQS"))) { rs =>
       assertThat(rs.size, is(1))

@@ -2,21 +2,21 @@ package shreddb
 
 import shreddb.column.{ColumnDefinition, ColumnFormat, ColumnShredder, ColumnTable}
 import shreddb.input.Input
-import shreddb.storage.{Compression, GzipCompression, GzipStorageDecorator, NoCompression, Storage, StorageSystem}
+import shreddb.storage.{Compression, GzipCompression, GzipStorageDecorator, NoCompression, Storage}
 
 class ShredDb(config: ShredConfiguration) {
   def shred(
-    name: String,
-    request: ShredRequest,
+    input: Input,
+    table: TableDefinition,
+    format: TableFormat,
+    storage: String,
+    compression: Compression,
     metadata: Map[String, String] = Map.empty
   ): ShredManifest = {
-    val storage = config.getStorageSystem(request.storageSystem, metadata)
-    val shredder = getShredder(name, request.format)
-    val mf = shredder.shred(name, storage, request.input, request.columns, request.defaultColumnFormat)
-    mf.withMetadata(metadata)
+    getShredder(format).shred(config, input, table, storage, compression, metadata)
   }
 
-  private def getShredder(name: String, format: TableFormat): Shredder = {
+  private def getShredder(format: TableFormat): Shredder = {
     format match {
       case ColumnsFormat => new ColumnShredder()
     }
@@ -24,27 +24,12 @@ class ShredDb(config: ShredConfiguration) {
   
   def getTable(mf: ShredManifest): ShredTable = {
     val tableDescriptor: TableDescriptor = mf.table
-
-    val storage = getStorage(tableDescriptor.storage.system, tableDescriptor.storage.compression, mf.metadata)
+    val storage = config.getStorage(tableDescriptor.storage.name, tableDescriptor.storage.compression, mf.metadata)
 
     tableDescriptor.format match {
       case ColumnsFormat => ColumnTable(storage, tableDescriptor)
     }
   }
-
-  private def getStorage(system: StorageSystem, compression: Compression, metadata: Map[String, String]) = {
-    val underlyingStorage: Storage = config.getStorageSystem(system, metadata)
-    val storage = compression match {
-      case NoCompression => underlyingStorage
-      case GzipCompression => new GzipStorageDecorator(underlyingStorage)
-    }
-    storage
-  }
 }
 
-case class ShredRequest(input: Input,
-                        storageSystem: StorageSystem,
-                        columns: Seq[ColumnDefinition],
-                        defaultColumnFormat: Option[ColumnFormat] = None,
-                        compression: Compression = NoCompression,
-                        format: TableFormat = ColumnsFormat)
+case class TableDefinition(name: String, columns: Seq[ColumnDefinition], defaultColumnFormat: Option[ColumnFormat] = None)

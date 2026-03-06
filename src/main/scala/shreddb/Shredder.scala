@@ -2,14 +2,15 @@ package shreddb
 
 import shreddb.column.{ColumnDefinition, ColumnFormat}
 import shreddb.input.Input
-import shreddb.storage.Storage
+import shreddb.storage.{Compression, Storage}
 
 trait Shredder {
   def shred(
-    name: String,
-    storage: Storage,
-    input: Input,
-    knownColumns: Seq[ColumnDefinition],
-    defaultColumnFormat: Option[ColumnFormat]
-  ): ShredManifest
+             config: ShredConfiguration,
+             input: Input,
+             table: TableDefinition,
+             storageName: String,
+             compression: Compression,
+             metadata: Map[String, String]
+           ): ShredManifest
 }

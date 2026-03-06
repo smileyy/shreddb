@@ -6,23 +6,6 @@ import java.io.{InputStream, OutputStream}
 
 trait Storage {
   /**
-   * The type of [[StorageSystem]] this is.
-   */
-  def system: StorageSystem
-
-  /**
-   * Indicates the type of compression being used by this system. This method is intended to be overwritten by 
-   * compression decorators such as [[GzipStorageDecorator]]; it should not be overridden by direct implementations. 
-   */
-  def compression: Compression = NoCompression
-
-  /**
-   * Creates a descriptor for inclusion in a [[shreddb.ShredManifest]] to describe how a table is written to this
-   * storage system.
-   */
-  final def descriptor: StorageDescriptor = StorageDescriptor(system, compression)
-
-  /**
    * Creates a new [[ResourceSink]] to write the file or files for a given resource
    */
   def newResourceSink(name: String): ResourceSink

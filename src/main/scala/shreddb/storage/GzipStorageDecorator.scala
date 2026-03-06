@@ -6,11 +6,6 @@ import java.io.{InputStream, OutputStream}
 import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 
 class GzipStorageDecorator(delegate: Storage) extends Storage {
-
-  override def system: StorageSystem = delegate.system
-
-  override def compression: Compression = GzipCompression
-
   override def newResourceSink(name: String): ResourceSink = new GzipResourceSink(
     delegate.newResourceSink(name)
   )

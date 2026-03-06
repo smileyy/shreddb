@@ -1,13 +1,9 @@
 package shreddb
 
 import shreddb.column.ColumnFormat
-import shreddb.storage.{Compression, StorageSystem}
+import shreddb.storage.Compression
 
-case class ShredManifest(table: TableDescriptor, metadata: Map[String, String] = Map.empty) {
-  def withMetadata(metadata: Map[String, String]): ShredManifest = {
-    ShredManifest(table, metadata)
-  }
-}
+case class ShredManifest(table: TableDescriptor, metadata: Map[String, String])
 
 case class TableDescriptor(
     name: String,
@@ -22,8 +18,6 @@ case class TableDescriptor(
   }
 }
 
-case class StorageDescriptor(system: StorageSystem, compression: Compression)
-
+case class StorageDescriptor(name: String, compression: Compression)
 case class ColumnDescriptor(name: String, format: ColumnFormat, resource: Option[ResourceDescriptor])
-
 case class ResourceDescriptor(container: Option[String], root: Option[String], name: String)
