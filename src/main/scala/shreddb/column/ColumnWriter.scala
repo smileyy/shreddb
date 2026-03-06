@@ -21,7 +21,7 @@ object ColumnWriter {
     val sink = storage.newResourceSink(UUID.randomUUID().toString)
 
     format match {
-      case RawStringColumnFormat(charset) => new RawStringColumnWriter(sink, name, charset)
+      case StringColumnFormat(charset) => new StringColumnWriter(sink, name, charset)
       case TokenizedStringColumnFormat(charset) => new TokenizedStringColumnWriter(sink, name, charset)
       case DecimalColumnFormat => new DecimalColumnWriter(sink, name)
     }

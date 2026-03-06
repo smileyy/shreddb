@@ -3,12 +3,12 @@ package shreddb.column
 import shreddb.storage.{Filesystem, NoCompression}
 import shreddb.{ColumnsFormat, ShredRequest, SimpleCsvTestBase}
 
-class RawColumnsFilesystemTest extends SimpleCsvTestBase {
+class StringColumnsFilesystemTest extends SimpleCsvTestBase {
   override def request: ShredRequest = {
     val columns = Seq(
-      ColumnDefinition("a", RawStringColumnFormat()),
-      ColumnDefinition("b", RawStringColumnFormat()),
-      ColumnDefinition("c", RawStringColumnFormat()),
+      ColumnDefinition("a", StringColumnFormat()),
+      ColumnDefinition("b", StringColumnFormat()),
+      ColumnDefinition("c", StringColumnFormat()),
       ColumnDefinition("qty", DecimalColumnFormat)
     )
 
@@ -16,7 +16,7 @@ class RawColumnsFilesystemTest extends SimpleCsvTestBase {
       input,
       Filesystem,
       columns,
-      Some(RawStringColumnFormat()),
+      Some(StringColumnFormat()),
       NoCompression,
       ColumnsFormat
     )

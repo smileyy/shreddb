@@ -70,30 +70,8 @@ class TokenizedStringColumnReader(numRows: Long, val lookupTable: TokenLookupTab
   override def filteredBy(criteria: Criteria): FilteredColumnReader = FilteredTokenizedStringColumnReader(this, criteria)
 }
 
-class FilteredTokenizedStringColumnReader(reader: TokenizedStringColumnReader, criteria: TokenizedCriteria) extends FilteredColumnReader {
-  override def nextMatchingIndexAtOrAfter(idx: Long): Option[Long] = {
-    reader.valueAt(idx) match {
-      case Some(_) =>
-      case None => return None
-    }
-
-    var done = false
-    var result: Option[Long] = None
-    while (!done) {
-      if (accepts(reader.currentValue)) {
-        result = Some(reader.currentIndex)
-        done = true
-      } else if (reader.hasNext) {
-        reader.next()
-      } else {
-        done = true
-      }
-    }
-
-    result
-  }
-
-  def accepts(value: Any): Boolean = {
+class FilteredTokenizedStringColumnReader(reader: TokenizedStringColumnReader, criteria: TokenizedCriteria) extends AbstractFilteredColumnReader(reader) {
+  override def accepts(value: Any): Boolean = {
     criteria match {
       case TokenizedIs(token) => token == value
       case TokenizedIn(tokens) => tokens.contains(value.asInstanceOf[Int])
