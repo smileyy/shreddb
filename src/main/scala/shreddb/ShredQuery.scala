@@ -27,6 +27,7 @@ sealed trait Criteria {
 }
 case class Is(field: String, value: String) extends Criteria
 case class In(field: String, values: Set[String]) extends Criteria
+case class SuchThat(field: String, f: String => Boolean) extends Criteria
 
 case class DecimalIs(field: String, value: BigDecimal) extends Criteria
 case class DecimalIn(field: String, values: Set[BigDecimal]) extends Criteria
@@ -39,6 +40,7 @@ case class DecimalBetween(field: String, inclusiveFloor: BigDecimal, exclusiveCe
 object ShredQueryCriteriaImplicits {
   extension(field: String) def is(value: String) = Is(field, value)
   extension(field: String) def in(values: Set[String]) = In(field, values)
+  extension(field: String) def suchThat(f: String => Boolean) = SuchThat(field, f)
   
   extension(field: String) def is(value: BigDecimal) = DecimalIs(field, value)
   extension(field: String) def in(values: Set[BigDecimal]) = DecimalIn(field, values)

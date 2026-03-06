@@ -122,6 +122,19 @@ trait SimpleCsvTestBase {
       assertThat(rs.rows.head.values, is(Seq(BigDecimal(9))))
     }
 
+    // String SuchThat operator
+    testQuery(table, select(Sum.of("qty")).where("b".suchThat { b => b.startsWith("ba") }).groupBy("b")) { rs =>
+      assertThat(rs.size, is(2))
+      val averagedResultSetIterator = rs.iterator
+      val row1 = averagedResultSetIterator.next()
+      assertThat(row1.group, is(Seq("bar")))
+      assertThat(row1.values, is(Seq(5)))
+      val row2 = averagedResultSetIterator.next()
+      assertThat(row2.group, is(Seq("baz")))
+      assertThat(row2.values, is(Seq(BigDecimal(13))))
+
+    }
+
     // Pre-aggregation transformation
     testQuery(table, select(Sum.of("qty").preApply({ d => -d}))) { rs =>
       assertThat(rs.size, is(1))
