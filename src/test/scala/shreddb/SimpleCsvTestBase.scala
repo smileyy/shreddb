@@ -31,7 +31,7 @@ trait SimpleCsvTestBase {
     val shreddb = new ShredDb(TestConfiguration)
 
     val tableDefinition = TableDefinition("simple-csv-test", columns, defaultColumnFormat)
-    val mf = shreddb.shred(input, tableDefinition, format, storage, compression)
+    val mf = shreddb.shred(input, tableDefinition, storage, compression, format)
 
     val table = shreddb.getTable(mf)
     assertThat(table.name, is("simple-csv-test"))
