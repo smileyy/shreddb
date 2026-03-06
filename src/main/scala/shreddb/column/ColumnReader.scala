@@ -34,7 +34,7 @@ abstract class AbstractColumnReader(numRows: Long) extends ColumnReader {
   }
 
   def next(): Any = {
-    currentIndex  = currentIndex + 1
+    currentIndex = currentIndex + 1
     currentValue = readNext(input)
 
     currentValue
@@ -43,11 +43,7 @@ abstract class AbstractColumnReader(numRows: Long) extends ColumnReader {
   protected def readNext(input: DataInputStream): Any
 
   def hasNext: Boolean = {
-    currentIndex < numRows
-  }
-
-  override def filteredBy(criteria: Criteria): FilteredColumnReader = {
-    throw new ShredQueryException(s"Cannot filter a decimal column (yet!)")
+    currentIndex + 1 < numRows
   }
 
   override def close(): Unit = input.close()

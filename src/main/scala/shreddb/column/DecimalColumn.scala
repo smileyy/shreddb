@@ -1,7 +1,7 @@
 package shreddb.column
 
-import shreddb.{Criteria, ResourceDescriptor, ShredQueryException}
 import shreddb.storage.{ResourceSink, ResourceSource, Storage}
+import shreddb.{Criteria, DecimalBetween, DecimalGreaterThan, DecimalGreaterThanOrEqual, DecimalIn, DecimalIs, DecimalLessThan, DecimalLessThanOrEqual, ResourceDescriptor, ShredQueryException}
 
 import java.io.{DataInputStream, DataOutputStream, InputStream}
 import java.math.BigInteger
@@ -35,7 +35,6 @@ class DecimalColumnWriter(val resource: ResourceSink, val name: String) extends 
 class DecimalColumnReader(numRows: Long, resource: ResourceSource) extends AbstractColumnReader(numRows) {
   override def newInputStream(): InputStream = resource.newInputStream(".values")
 
-
   override protected def readNext(input: DataInputStream): Any = {
     val scale = input.readInt()
 
@@ -45,5 +44,26 @@ class DecimalColumnReader(numRows: Long, resource: ResourceSource) extends Abstr
 
     val integer = new BigInteger(bytes)
     new BigDecimal(new java.math.BigDecimal(integer, scale))
+  }
+
+  override def filteredBy(criteria: Criteria): FilteredColumnReader = {
+    new FilteredDecimalColumnReader(this, criteria)
+  }
+}
+
+class FilteredDecimalColumnReader(reader: DecimalColumnReader, criteria: Criteria) extends AbstractFilteredColumnReader(reader) {
+  def accepts(value: Any): Boolean = {
+    criteria match {
+      case DecimalIs(_, v) => v == value
+      case DecimalIn(_, vs) => vs.contains(value.asInstanceOf[BigDecimal])
+      case DecimalGreaterThan(_, v) => value.asInstanceOf[BigDecimal] > v
+      case DecimalGreaterThanOrEqual(_, v) => value.asInstanceOf[BigDecimal] >= v
+      case DecimalLessThan(_, v) => value.asInstanceOf[BigDecimal] < v
+      case DecimalLessThanOrEqual(_, v) => value.asInstanceOf[BigDecimal] <= v
+      case DecimalBetween(_, inclusiveFloor, exclusiveCeiling) =>
+        val d = value.asInstanceOf[BigDecimal]
+        d >= inclusiveFloor && d < exclusiveCeiling
+      case _ => throw new ShredQueryException("Unsupported criteria for Decimal column")
+    }
   }
 }

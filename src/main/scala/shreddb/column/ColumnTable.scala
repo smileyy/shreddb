@@ -48,8 +48,7 @@ class ColumnTable(storage: Storage, val name: String, numRows: Long, columns: Se
         }
       }
     }
-
-
+    
     columnReadersByName.values.foreach { reader => reader.close() }
 
     builder.build()

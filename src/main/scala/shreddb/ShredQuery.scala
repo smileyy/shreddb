@@ -28,9 +28,26 @@ sealed trait Criteria {
 case class Is(field: String, value: String) extends Criteria
 case class In(field: String, values: Set[String]) extends Criteria
 
+case class DecimalIs(field: String, value: BigDecimal) extends Criteria
+case class DecimalIn(field: String, values: Set[BigDecimal]) extends Criteria
+case class DecimalGreaterThan(field: String, value: BigDecimal) extends Criteria
+case class DecimalGreaterThanOrEqual(field: String, value: BigDecimal) extends Criteria
+case class DecimalLessThan(field: String, value: BigDecimal) extends Criteria
+case class DecimalLessThanOrEqual(field: String, value: BigDecimal) extends Criteria
+case class DecimalBetween(field: String, inclusiveFloor: BigDecimal, exclusiveCeiling: BigDecimal) extends Criteria
+
 object ShredQueryCriteriaImplicits {
   extension(field: String) def is(value: String) = Is(field, value)
   extension(field: String) def in(values: Set[String]) = In(field, values)
+  
+  extension(field: String) def is(value: BigDecimal) = DecimalIs(field, value)
+  extension(field: String) def in(values: Set[BigDecimal]) = DecimalIn(field, values)
+  extension(field: String) def gt(value: BigDecimal) = DecimalGreaterThan(field, value)
+  extension(field: String) def gte(value: BigDecimal) = DecimalGreaterThanOrEqual(field, value)
+  extension(field: String) def lt(value: BigDecimal) = DecimalLessThan(field, value)
+  extension(field: String) def lte(value: BigDecimal) = DecimalLessThanOrEqual(field, value)
+  extension(field: String) def between(inclusiveFloor: BigDecimal, exclusiveCeiling: BigDecimal) = 
+    DecimalBetween(field, inclusiveFloor, exclusiveCeiling)
 }
 
 sealed trait Aggregation {
