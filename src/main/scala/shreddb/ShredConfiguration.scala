@@ -1,7 +1,15 @@
 package shreddb
 
-import shreddb.storage.{Storage, StorageSystem}
+import shreddb.storage.{Compression, GzipCompression, GzipStorageDecorator, NoCompression, Storage}
 
 trait ShredConfiguration {
-  def getStorageSystem(system: StorageSystem, metadata: Map[String, String]): Storage
+  def getStorage(name: String, compression: Compression, metadata: Map[String, String]): Storage = {
+    val underlying: Storage = getUnderlyingStorage(name, metadata)
+    compression match {
+      case NoCompression => underlying
+      case GzipCompression => new GzipStorageDecorator(underlying)
+    }
+  }
+  
+  protected def getUnderlyingStorage(name: String, metadata: Map[String, String]): Storage
 }

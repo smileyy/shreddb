@@ -3,14 +3,6 @@ package shreddb.storage
 sealed trait Compression {
   def name: String
 }
-object Compression {
-  private val compressions = Seq(NoCompression, GzipCompression)
-  private lazy val compressionsByName: Map[String, Compression] = compressions.map { c => c.name -> c }.toMap
-  
-  def apply(name: String): Compression = {
-    compressionsByName(name)
-  }
-}
 
 object NoCompression extends Compression {
   override def name: String = "none"

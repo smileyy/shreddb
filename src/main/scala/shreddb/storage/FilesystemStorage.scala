@@ -6,8 +6,6 @@ import java.io.{InputStream, OutputStream}
 import java.nio.file.{Files, OpenOption, Path, StandardOpenOption}
 
 class FilesystemStorage(val directory: Path) extends Storage {
-  override def system: StorageSystem = Filesystem
-
   override def newResourceSink(name: String): ResourceSink = {
     new FilesystemResourceSink(directory, name)
   }
