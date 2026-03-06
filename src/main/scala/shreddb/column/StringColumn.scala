@@ -1,6 +1,6 @@
 package shreddb.column
 
-import shreddb.{Criteria, In, Is, ResourceDescriptor}
+import shreddb.{Criteria, In, Is, ResourceDescriptor, ShredQueryException}
 import shreddb.storage.{ResourceSink, ResourceSource, Storage}
 
 import java.io.{DataInputStream, DataOutputStream, InputStream}
@@ -49,6 +49,7 @@ class FilteredStringColumnReader(reader: StringColumnReader, criteria: Criteria)
     criteria match {
       case Is(_, v) => v == value
       case In(_, vs) => vs.contains(value.asInstanceOf[String])
+      case _ => throw new ShredQueryException("Unsupported criteria for String column")
     }
   }
 }

@@ -19,7 +19,7 @@ trait SimpleCsvTestBase {
   )
 
   @Test
-  def simple(): Unit = {
+  def test(): Unit = {
     val shred = new ShredDb(TestConfiguration)
 
     val mf = shred.shred("simple-csv-test", request)
@@ -28,7 +28,7 @@ trait SimpleCsvTestBase {
     assertThat(table.name, is("simple-csv-test"))
     assertThat(table.columnNames, is(Seq("a", "b", "c", "tag:user", "qty")))
 
-    // No where clause; believe it or not, this bug wasn't found for a while.
+    // No where clause; believe it or not, this was a bug that wasn't found for a little while
     testQuery(table, select(Sum.of("qty"))) { rs =>
       assertThat(rs.size, is(1))
       assertThat(rs.rows.head.values, is(Seq(BigDecimal(36))))
@@ -80,6 +80,48 @@ trait SimpleCsvTestBase {
       assertThat(row2.values, is(Seq(BigDecimal(15), BigDecimal("7.5"))))
     }
 
+    // DecimalIs operator
+    testQuery(table, select(Sum.of("qty")).where("qty".is(BigDecimal(6)))) { rs =>
+      assertThat(rs.size, is(1))
+      assertThat(rs.rows.head.values, is(Seq(BigDecimal(6))))
+    }
+
+    // DecimalIn operator
+    testQuery(table, select(Sum.of("qty")).where("qty".in(Set(BigDecimal(5), BigDecimal(6))))) { rs =>
+      assertThat(rs.size, is(1))
+      assertThat(rs.rows.head.values, is(Seq(BigDecimal(11))))
+    }
+
+    // DecimalGreaterThan operator
+    testQuery(table, select(Sum.of("qty")).where("qty".gt(BigDecimal(6)))) { rs =>
+      assertThat(rs.size, is(1))
+      assertThat(rs.rows.head.values, is(Seq(BigDecimal(15))))
+    }
+
+    // DecimalGreaterThanOrEqual operator
+    testQuery(table, select(Sum.of("qty")).where("qty".gte(BigDecimal(6)))) { rs =>
+      assertThat(rs.size, is(1))
+      assertThat(rs.rows.head.values, is(Seq(BigDecimal(21))))
+    }
+
+    // DecimalLessThan operator
+    testQuery(table, select(Sum.of("qty")).where("qty".lt(BigDecimal(4)))) { rs =>
+      assertThat(rs.size, is(1))
+      assertThat(rs.rows.head.values, is(Seq(BigDecimal(6))))
+    }
+
+    // DecimalLessThanOrEqual operator
+    testQuery(table, select(Sum.of("qty")).where("qty".lte(BigDecimal(4)))) { rs =>
+      assertThat(rs.size, is(1))
+      assertThat(rs.rows.head.values, is(Seq(BigDecimal(10))))
+    }
+
+    // DecimalBetween operator
+    testQuery(table, select(Sum.of("qty")).where("qty".between(BigDecimal(4), BigDecimal(6)))) { rs =>
+      assertThat(rs.size, is(1))
+      assertThat(rs.rows.head.values, is(Seq(BigDecimal(9))))
+    }
+
     // Pre-aggregation transformation
     testQuery(table, select(Sum.of("qty").preApply({ d => -d}))) { rs =>
       assertThat(rs.size, is(1))
@@ -93,8 +135,7 @@ trait SimpleCsvTestBase {
     }
 }
 
-
-private def testQuery(table: ShredTable, query: ShredQuery)(verify: ShredResultSet => Unit): Unit = {
+  private def testQuery(table: ShredTable, query: ShredQuery)(verify: ShredResultSet => Unit): Unit = {
     verify(table.query(query))
   }
 }
