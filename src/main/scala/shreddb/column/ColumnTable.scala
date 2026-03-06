@@ -122,7 +122,7 @@ object ColumnTable {
     val columns: Seq[Column] = tableDescriptor.columns.map{ c =>
       c.format match {
         case DecimalColumnFormat => new DecimalColumn(c.name, tableDescriptor.numRows, storage, c.resource.get)
-        case RawStringColumnFormat(charset) => new RawStringColumn(c.name, tableDescriptor.numRows, storage, c.resource.get, charset)
+        case StringColumnFormat(charset) => new StringColumn(c.name, tableDescriptor.numRows, storage, c.resource.get, charset)
         case TokenizedStringColumnFormat(charset) => new TokenizedStringColumn(c.name, tableDescriptor.numRows, storage, c.resource.get, charset)
       }
     }

@@ -3,7 +3,6 @@ package shreddb.column
 import shreddb.{Criteria, ShredQueryException}
 
 import java.io.{DataInputStream, InputStream}
-import java.math.BigInteger
 
 trait ColumnReader {
   def valueAt(idx: Long): Option[Any]
@@ -56,4 +55,30 @@ abstract class AbstractColumnReader(numRows: Long) extends ColumnReader {
 
 trait FilteredColumnReader {
   def nextMatchingIndexAtOrAfter(idx: Long): Option[Long]
+}
+
+abstract class AbstractFilteredColumnReader(reader: AbstractColumnReader) extends FilteredColumnReader {
+  override def nextMatchingIndexAtOrAfter(idx: Long): Option[Long] = {
+    reader.valueAt(idx) match {
+      case Some(_) =>
+      case None => return None
+    }
+
+    var done = false
+    var result: Option[Long] = None
+    while (!done) {
+      if (accepts(reader.currentValue)) {
+        result = Some(reader.currentIndex)
+        done = true
+      } else if (reader.hasNext) {
+        reader.next()
+      } else {
+        done = true
+      }
+    }
+
+    result
+  }
+
+  def accepts(value: Any): Boolean
 }
